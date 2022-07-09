@@ -8,9 +8,10 @@ torchmetrics>=0.7.0
 hydra-core>=1.1.0
 hydra-colorlog>=1.1.0
 hydra-optuna-sweeper>=1.1.0
+omegaconf
 
 # --------- loggers --------- #
-# wandb
+wandb
 # neptune-client
 # mlflow
 # comet-ml
