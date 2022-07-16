@@ -1,6 +1,6 @@
 _target_: src.datamodules.city_flow_datamodule.CityFlowDataModule
 
 data_dir: "data/AIC21_Track2_ReID"
-batch_size: 64
+batch_size: 1
 num_workers: 0
 pin_memory: False

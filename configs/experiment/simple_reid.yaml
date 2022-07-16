@@ -6,8 +6,8 @@
 defaults:
   - override /datamodule: city_flow.yaml
   - override /model: simple_reid.yaml
-  - override /callbacks: null
-  - override /logger: null
+  - override /callbacks: saver.yaml
+  - override /logger: wandb.yaml
   - override /trainer: default.yaml
 
 # all parameters below will be merged with parameters from default configurations set above
@@ -19,18 +19,13 @@ name: "simple_reid"
 seed: 12345
 
 trainer:
-  min_epochs: 10
-  max_epochs: 10
+  max_epochs: 2
 
 model:
   lr: 0.002
-  net:
-    lin1_size: 128
-    lin2_size: 256
-    lin3_size: 64
 
 datamodule:
   batch_size: 64
-#logger:
-#  wandb:
-#    tags: ["mnist", "${name}"]
+logger:
+  wandb:
+    project: simple_reid

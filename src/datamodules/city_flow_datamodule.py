@@ -30,7 +30,9 @@ class CityFlowDataset(Dataset):
         if self.test:
             image_path, vid = self.df.iloc[item]
             image = torch.tensor(read_image(image_path), dtype=torch.float)
-            return image, vid
+            if self.transform:
+                image = self.transform(image)
+            return image, int(vid)
 
         anchor_vehicle_id = self.all_ids[item]
 
@@ -53,11 +55,11 @@ class CityFlowDataset(Dataset):
 
 class CityFlowDataModule(LightningDataModule):
     def __init__(
-        self,
-        data_dir: str = "data/",
-        batch_size: int = 64,
-        num_workers: int = 0,
-        pin_memory: bool = False,
+            self,
+            data_dir: str = "data/",
+            batch_size: int = 1,
+            num_workers: int = 0,
+            pin_memory: bool = False,
     ):
         super().__init__()
 
@@ -106,7 +108,10 @@ class CityFlowDataModule(LightningDataModule):
                 transform=self.transforms,
             )
             self.data_test = CityFlowDataset(
-                self.df[self.df["vehicle_id"].isin(test_ids)], test_ids, test=False
+                self.df[self.df["vehicle_id"].isin(test_ids)],
+                test_ids,
+                test=True,
+                transform=self.transforms
             )
 
     def train_dataloader(self):
