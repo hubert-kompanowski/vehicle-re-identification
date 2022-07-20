@@ -1,0 +1,36 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+
+defaults:
+  - override /datamodule: city_flow.yaml
+  - override /model: simple_reid.yaml
+  - override /callbacks: saver.yaml
+  - override /logger: wandb.yaml
+  - override /trainer: default.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+# name of the run determines folder name in logs
+name: "simple_reid_cv"
+
+seed: 12345
+
+trainer:
+  min_epochs: 2
+  max_epochs: 2
+  gpus: 1
+
+model:
+  lr: 0.002
+
+datamodule:
+  batch_size: 64
+
+logger:
+  wandb:
+    project: simple_reid
+
+run_cv: True

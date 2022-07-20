@@ -2,6 +2,7 @@ import os
 from typing import List, Optional
 
 import hydra
+import wandb
 from omegaconf import DictConfig
 from pytorch_lightning import (
     Callback,
@@ -27,6 +28,9 @@ def train(config: DictConfig) -> Optional[float]:
     Returns:
         Optional[float]: Metric score for hyperparameter optimization.
     """
+
+    if config.get("run_cv"):
+        log.info(f"Run Cross-Validation with hash_cv: {config.hash_cv}, fold: {config.datamodule.val_fold}")
 
     # Set seed for random number generators in pytorch, numpy and python.random
     if config.get("seed"):
@@ -69,6 +73,9 @@ def train(config: DictConfig) -> Optional[float]:
         config.trainer, callbacks=callbacks, logger=logger, _convert_="partial"
     )
 
+    if config.get("run_cv"):
+        wandb.log({'hash_cv': config.hash_cv})
+
     # Send some parameters from config to all lightning loggers
     log.info("Logging hyperparameters!")
     utils.log_hyperparameters(
@@ -102,20 +109,23 @@ def train(config: DictConfig) -> Optional[float]:
         log.info("Starting testing!")
         trainer.test(model=model, datamodule=datamodule, ckpt_path=ckpt_path)
 
-    # Make sure everything closed properly
-    log.info("Finalizing!")
-    utils.finish(
-        config=config,
-        model=model,
-        datamodule=datamodule,
-        trainer=trainer,
-        callbacks=callbacks,
-        logger=logger,
-    )
+    trainer.logger.experiment.finish()
 
-    # Print path to best checkpoint
-    if not config.trainer.get("fast_dev_run") and config.get("train"):
-        log.info(f"Best model ckpt at {trainer.checkpoint_callback.best_model_path}")
+    if not config.run_cv or config.datamodule.val_fold == 3:
+        # Make sure everything closed properly
+        log.info("Finalizing!")
+        utils.finish(
+            config=config,
+            model=model,
+            datamodule=datamodule,
+            trainer=trainer,
+            callbacks=callbacks,
+            logger=logger,
+        )
 
-    # Return metric score for hyperparameter optimization
-    return score
+        # Print path to best checkpoint
+        if not config.trainer.get("fast_dev_run") and config.get("train"):
+            log.info(f"Best model ckpt at {trainer.checkpoint_callback.best_model_path}")
+
+        # Return metric score for hyperparameter optimization
+        return score

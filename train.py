@@ -1,7 +1,7 @@
 import dotenv
 import hydra
 from omegaconf import DictConfig, OmegaConf
-
+import uuid
 # load environment variables from `.env` file if it exists
 # recursively searches for `.env` in all folders starting from work dir
 dotenv.load_dotenv(override=True)
@@ -9,7 +9,7 @@ dotenv.load_dotenv(override=True)
 
 @hydra.main(config_path="configs/", config_name="train.yaml")
 def main(config: DictConfig):
-    print(OmegaConf.to_yaml(config))
+    # print(OmegaConf.to_yaml(config))
 
     # Imports can be nested inside @hydra.main to optimize tab completion
     # https://github.com/facebookresearch/hydra/issues/934
@@ -19,8 +19,16 @@ def main(config: DictConfig):
     # Applies optional utilities
     utils.extras(config)
 
-    # Train model
-    return train(config)
+    if config.get("run_cv"):
+        hash_cv = str(uuid.uuid4())
+        config.hash_cv = hash_cv
+
+        for fold in range(4):
+            config.datamodule.val_fold = fold
+            train(config)
+        return
+    else:
+        return train(config)
 
 
 if __name__ == "__main__":

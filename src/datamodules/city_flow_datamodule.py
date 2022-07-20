@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 import hydra
+import numpy as np
 import pandas as pd
 import torch
 from hydra.utils import to_absolute_path
@@ -60,6 +61,7 @@ class CityFlowDataModule(LightningDataModule):
             batch_size: int = 1,
             num_workers: int = 0,
             pin_memory: bool = False,
+            val_fold=None
     ):
         super().__init__()
 
@@ -71,6 +73,7 @@ class CityFlowDataModule(LightningDataModule):
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ]
         )
+        self.val_fold = val_fold
 
         self.data_train: Optional[Dataset] = None
         self.data_val: Optional[Dataset] = None
@@ -92,8 +95,18 @@ class CityFlowDataModule(LightningDataModule):
 
     def setup(self, stage: Optional[str] = None):
         if not self.data_train and not self.data_val and not self.data_test:
-            train_ids, test_ids = train_test_split(self.all_ids, test_size=0.3, random_state=42)
-            val_ids, test_ids = train_test_split(test_ids, test_size=0.5, random_state=42)
+            if self.val_fold is not None:
+                fold1, fold3 = train_test_split(self.all_ids, test_size=0.5, random_state=123)
+                fold1, fold2 = train_test_split(fold1, test_size=0.5, random_state=123)
+                fold3, fold4 = train_test_split(fold3, test_size=0.5, random_state=123)
+                folds = [fold1, fold2, fold3, fold4]
+                train_ids = np.array(folds[0:self.val_fold] + folds[self.val_fold + 1:]).flatten()
+                val_ids = np.array(folds[self.val_fold]).flatten()
+                test_ids = val_ids
+            else:
+
+                train_ids, test_ids = train_test_split(self.all_ids, test_size=0.3, random_state=42)
+                val_ids, test_ids = train_test_split(test_ids, test_size=0.5, random_state=42)
 
             self.data_train = CityFlowDataset(
                 self.df[self.df["vehicle_id"].isin(train_ids)],
