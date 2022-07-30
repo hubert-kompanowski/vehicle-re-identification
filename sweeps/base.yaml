@@ -1,0 +1,25 @@
+program: train.py
+method: bayes
+metric:
+  name: val_loss_accumulated
+  goal: minimize
+
+parameters:
+
+  model.backbone:
+    values: ['resnet18', 'resnet34']
+  model.optimizer_options.lr:
+    min: 0.0001
+    max: 0.1
+  model.optimizer_options.weight_decay:
+    min: 0.0001
+    max: 0.1
+  experiment:
+    values: ['config_sweep']
+
+
+command:
+  - ${env}
+  - python
+  - ${program}
+  - ${args_no_hyphens}

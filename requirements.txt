@@ -8,10 +8,10 @@ torchmetrics>=0.7.0
 hydra-core>=1.1.0
 hydra-colorlog>=1.1.0
 hydra-optuna-sweeper>=1.1.0
-omegaconf
+omegaconf~=2.2.2
 
 # --------- loggers --------- #
-wandb
+wandb~=0.12.21
 # neptune-client
 # mlflow
 # comet-ml
@@ -25,8 +25,16 @@ flake8          # code analysis
 nbstripout      # remove output from jupyter notebooks
 
 # --------- others --------- #
-python-dotenv   # loading env variables from .env file
-rich            # beautiful text formatting in terminal
-pytest          # tests
-sh              # for running bash commands in some tests
+python-dotenv~=0.20.0
+rich~=12.5.1
+pytest~=7.1.2
+sh~=1.14.2
 pudb            # debugger
+
+opencv-python~=4.6.0.66
+numpy~=1.22.3
+pandas~=1.4.3
+sklearn~=0.0
+scikit-learn~=1.1.1
+pillow~=9.2.0
+packaging~=21.3

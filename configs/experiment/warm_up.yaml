@@ -14,18 +14,19 @@ defaults:
 # this allows you to overwrite only specified parameters
 
 # name of the run determines folder name in logs
-name: "simple_reid_cv_resnet34"
+name: "warm_up_no_cv"
 
 seed: 12345
 
 trainer:
-  min_epochs: 25
-  max_epochs: 100
+  min_epochs: 120
+  max_epochs: 250
   gpus: 1
 
 model:
   optimizer_options:
     lr: 0.002
+    scheduler: warm-up
   backbone: resnet34
 
 datamodule:
@@ -35,4 +36,4 @@ logger:
   wandb:
     project: simple_reid
 
-run_cv: True
+run_cv: False

@@ -1,3 +1,8 @@
 _target_: src.models.simple_reid_module.SimpleReIdLitModule
-lr: 0.001
-weight_decay: 0.0005
+backbone: resnet18
+
+optimizer_options:
+  optimizer: adam
+  lr: 0.001
+  weight_decay: 0.0005
+  scheduler: None

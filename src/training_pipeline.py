@@ -73,8 +73,8 @@ def train(config: DictConfig) -> Optional[float]:
         config.trainer, callbacks=callbacks, logger=logger, _convert_="partial"
     )
 
-    if config.get("run_cv"):
-        wandb.log({'hash_cv': config.hash_cv})
+    wandb.log({'name': config.name})
+    wandb.log({'hash_cv': config.hash_cv})
 
     # Send some parameters from config to all lightning loggers
     log.info("Logging hyperparameters!")
@@ -129,3 +129,4 @@ def train(config: DictConfig) -> Optional[float]:
 
         # Return metric score for hyperparameter optimization
         return score
+    print('finifsja')

@@ -14,13 +14,13 @@ defaults:
 # this allows you to overwrite only specified parameters
 
 # name of the run determines folder name in logs
-name: "simple_reid_cv_resnet34"
+name: "sweep"
 
 seed: 12345
 
 trainer:
-  min_epochs: 25
-  max_epochs: 100
+  min_epochs: 30
+  max_epochs: 200
   gpus: 1
 
 model:
@@ -35,4 +35,5 @@ logger:
   wandb:
     project: simple_reid
 
-run_cv: True
+run_cv: False
+test: False

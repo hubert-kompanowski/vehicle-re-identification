@@ -1,18 +1,19 @@
-import random
 import xml.etree.ElementTree as ET
-from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
-import hydra
+import cv2
 import numpy as np
 import pandas as pd
 import torch
+import torchvision
 from hydra.utils import to_absolute_path
+from matplotlib import pyplot as plt
 from pytorch_lightning import LightningDataModule
 from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, Dataset
 from torchvision.io import read_image
 from torchvision.transforms import transforms
+import torchvision.transforms as T
 
 
 class CityFlowDataset(Dataset):
@@ -70,10 +71,14 @@ class CityFlowDataModule(LightningDataModule):
         self.transforms = transforms.Compose(
             [
                 transforms.Resize(size=(256, 256)),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                # transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+                # transforms.ToPILImage()
             ]
         )
         self.val_fold = val_fold
+
+        if self.val_fold is not None:
+            self.val_fold = self.val_fold[0]
 
         self.data_train: Optional[Dataset] = None
         self.data_val: Optional[Dataset] = None
@@ -153,3 +158,30 @@ class CityFlowDataModule(LightningDataModule):
             pin_memory=self.hparams.pin_memory,
             shuffle=False,
         )
+
+    def display(self, subset='val'):
+        self.setup()
+        loaders = {
+            'train': self.train_dataloader(),
+            'val': self.val_dataloader(),
+        }
+        for images, _ in loaders[subset]:
+            anchor_img, positive_img, negative_img = images
+
+
+
+            vis = np.concatenate((
+                cv2.cvtColor(anchor_img.long().squeeze().permute(1, 2, 0).numpy().astype('uint8'), cv2.COLOR_RGB2BGR),
+                cv2.cvtColor(positive_img.long().squeeze().permute(1, 2, 0).numpy().astype('uint8'), cv2.COLOR_RGB2BGR),
+                cv2.cvtColor(negative_img.long().squeeze().permute(1, 2, 0).numpy().astype('uint8'), cv2.COLOR_RGB2BGR),
+            ), axis=1)
+            cv2.imshow('win', vis)
+
+            if cv2.waitKey(1500) == ord('q'):
+                break
+
+    def show_ids(self):
+        self.setup()
+        print('train', sorted(self.data_train.all_ids))
+        print('val', sorted(self.data_val.all_ids))
+        print('test', sorted(self.data_test.all_ids))
