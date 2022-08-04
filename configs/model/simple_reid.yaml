@@ -5,4 +5,8 @@ optimizer_options:
   optimizer: adam
   lr: 0.001
   weight_decay: 0.0005
-  scheduler: None
+  scheduler:
+    apply: False
+    type: WarmupLR
+    max_lr: 0.00035
+    num_epochs: 70

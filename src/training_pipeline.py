@@ -129,4 +129,3 @@ def train(config: DictConfig) -> Optional[float]:
 
         # Return metric score for hyperparameter optimization
         return score
-    print('finifsja')

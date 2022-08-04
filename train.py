@@ -17,17 +17,18 @@ def main(config: DictConfig):
     from src.training_pipeline import train
 
     hash_cv = str(uuid.uuid4())
-    config.hash_cv = "single_"+hash_cv
 
     # Applies optional utilities
     utils.extras(config)
 
     if config.get("run_cv"):
+        config.hash_cv = hash_cv
 
         for fold in range(4):
             config.datamodule.val_fold = [fold]
             train(config)
     else:
+        config.hash_cv = "single_" + hash_cv
         return train(config)
 
 

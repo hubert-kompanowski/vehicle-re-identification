@@ -1,0 +1,45 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+
+defaults:
+  - override /datamodule: city_flow.yaml
+  - override /model: simple_reid.yaml
+  - override /callbacks: saver.yaml
+  - override /logger: wandb.yaml
+  - override /trainer: default.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+# name of the run determines folder name in logs
+name: "warm_up_max_lr"
+
+seed: 12345
+
+trainer:
+  min_epochs: 70
+  max_epochs: 200
+  gpus: 1
+
+model:
+  optimizer_options:
+    optimizer: adam
+    scheduler:
+      apply: True
+      type: WarmupLR
+      max_lr: 0.000035
+      num_epochs: 50
+
+  backbone: resnet34
+
+datamodule:
+  batch_size: 64
+  num_workers: 12
+
+logger:
+  wandb:
+    project: simple_reid
+
+run_cv: True

@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torchvision
+from PIL import Image
 from hydra.utils import to_absolute_path
 from matplotlib import pyplot as plt
 from pytorch_lightning import LightningDataModule
@@ -14,26 +15,38 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision.io import read_image
 from torchvision.transforms import transforms
 import torchvision.transforms as T
+import albumentations as A
 
 
 class CityFlowDataset(Dataset):
-    def __init__(self, df, all_ids, test=False, transform=None):
+    def __init__(self, df, all_ids, test=False, transform=None, aug=None):
         self.df = df
         self.all_ids = all_ids
         self.transform = transform
         self.test = test
+        self.aug = aug
 
     def __len__(self):
         if self.test:
             return len(self.df)
         return len(self.all_ids)
 
+    @staticmethod
+    def load_image(img_path):
+        with Image.open(img_path) as img:
+            img = np.asarray(img, dtype=np.uint8)
+            img = cv2.resize(img, (256, 256))
+            # img = np.transpose(img, (2,0,1))
+            return img
+
+    def load_images(self, img_paths):
+        return [self.load_image(p) for p in img_paths]
+
     def __getitem__(self, item):
         if self.test:
             image_path, vid = self.df.iloc[item]
-            image = torch.tensor(read_image(image_path), dtype=torch.float)
-            if self.transform:
-                image = self.transform(image)
+            image = self.load_image(image_path)
+            image = self.preprocessing(image, test=True)
             return image, int(vid)
 
         anchor_vehicle_id = self.all_ids[item]
@@ -46,13 +59,59 @@ class CityFlowDataset(Dataset):
             self.df[self.df["vehicle_id"] != anchor_vehicle_id].sample(n=1).iloc[0]
         )
 
-        results = []
-        for image_path in [anchor_image_path, positive_image_path, negative_image_path]:
-            image = torch.tensor(read_image(image_path), dtype=torch.float)
-            if self.transform:
-                image = self.transform(image)
-            results.append(image)
-        return results, 1
+        images_list = self.load_images([anchor_image_path, positive_image_path, negative_image_path])
+
+        if self.aug is not None and self.aug.apply:
+            images_list = [self.augment(image) for image in images_list]
+
+        images = np.stack(images_list)
+        images = self.preprocessing(images)
+        return images, 1
+
+    @staticmethod
+    def preprocessing(images, test=False):
+        if test:
+            images = np.transpose(images, (2, 0, 1))
+        else:
+            # images: [3,H,W,C] -> [3,C,H,W]
+            images = np.transpose(images, (0, 3, 1, 2))
+        images = (images / 255.0).astype(np.float)
+        return images
+
+    @staticmethod
+    def undo_preprocessing(images):
+        # images: [3,C,H,W] -> [3,H,W,C]
+        images = (images * 255.0).astype(np.uint8)
+        images = np.transpose(images, (0, 2, 3, 1))
+        return images
+
+    def augment(self, images):
+        transform = []
+
+        if 'horizontal_flip' in self.aug and self.aug.horizontal_flip:
+            transform.append(
+                A.HorizontalFlip(p=0.5)
+            )
+        if 'random_brightness_contrast' in self.aug and self.aug.random_brightness_contrast:
+            transform.append(
+                A.RandomBrightnessContrast(p=0.3)
+            )
+        if 'shift_scale_rotate' in self.aug and self.aug.shift_scale_rotate:
+            transform.append(
+                A.ShiftScaleRotate(p=0.5)
+            )
+        if 'blur' in self.aug and self.aug.blur:
+            transform.append(
+                A.GaussianBlur(p=0.5)
+            )
+        if 'cutout' in self.aug and self.aug.cutout:
+            transform.append(
+                A.Cutout(p=0.4, max_h_size=25, max_w_size=25)
+            )
+
+        transform = A.Compose(transform)
+        results = transform(image=images)['image']
+        return results
 
 
 class CityFlowDataModule(LightningDataModule):
@@ -62,7 +121,8 @@ class CityFlowDataModule(LightningDataModule):
             batch_size: int = 1,
             num_workers: int = 0,
             pin_memory: bool = False,
-            val_fold=None
+            val_fold=None,
+            aug: dict = None
     ):
         super().__init__()
 
@@ -71,11 +131,10 @@ class CityFlowDataModule(LightningDataModule):
         self.transforms = transforms.Compose(
             [
                 transforms.Resize(size=(256, 256)),
-                # transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-                # transforms.ToPILImage()
             ]
         )
         self.val_fold = val_fold
+        self.aug = aug
 
         if self.val_fold is not None:
             self.val_fold = self.val_fold[0]
@@ -118,6 +177,7 @@ class CityFlowDataModule(LightningDataModule):
                 train_ids,
                 test=False,
                 transform=self.transforms,
+                aug=self.aug
             )
             self.data_val = CityFlowDataset(
                 self.df[self.df["vehicle_id"].isin(val_ids)],
@@ -161,19 +221,18 @@ class CityFlowDataModule(LightningDataModule):
 
     def display(self, subset='val'):
         self.setup()
-        loaders = {
-            'train': self.train_dataloader(),
-            'val': self.val_dataloader(),
+        datasets = {
+            'train': self.data_train,
+            'val': self.data_val,
         }
-        for images, _ in loaders[subset]:
-            anchor_img, positive_img, negative_img = images
+        for images, _ in datasets[subset]:
 
-
-
+            anchor_img, positive_img, negative_img = datasets[subset].undo_preprocessing(images)
             vis = np.concatenate((
-                cv2.cvtColor(anchor_img.long().squeeze().permute(1, 2, 0).numpy().astype('uint8'), cv2.COLOR_RGB2BGR),
-                cv2.cvtColor(positive_img.long().squeeze().permute(1, 2, 0).numpy().astype('uint8'), cv2.COLOR_RGB2BGR),
-                cv2.cvtColor(negative_img.long().squeeze().permute(1, 2, 0).numpy().astype('uint8'), cv2.COLOR_RGB2BGR),
+                cv2.cvtColor(anchor_img, cv2.COLOR_RGB2BGR),
+                cv2.cvtColor(positive_img, cv2.COLOR_RGB2BGR),
+                cv2.cvtColor(negative_img, cv2.COLOR_RGB2BGR),
+
             ), axis=1)
             cv2.imshow('win', vis)
 
