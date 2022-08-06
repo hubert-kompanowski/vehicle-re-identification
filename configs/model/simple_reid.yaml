@@ -4,10 +4,10 @@ optimizer_options:
   optimizer: sgd
   lr: 0.001
   weight_decay: 0.0005
-
   scheduler:
     apply: True
     type: OneCycleLR
     max_lr: 0.0008
     num_epochs: 40
 backbone: resnet34
+stage: null

@@ -39,3 +39,4 @@ logger:
     project: simple_reid
 
 run_cv: True
+last_stride: True

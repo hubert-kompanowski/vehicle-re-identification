@@ -12,3 +12,5 @@ aug:
   random_brightness_contrast: True
   shift_scale_rotate: True
   cutout: True
+
+stage: null

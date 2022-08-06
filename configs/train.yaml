@@ -57,5 +57,8 @@ seed: 12345
 name: "default"
 
 run_cv: True
+run_mdl: False
 hash_cv: null
+last_stride: False
 
+output_dir: ${hydra:runtime.output_dir}

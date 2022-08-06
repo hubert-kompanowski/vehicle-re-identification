@@ -15,17 +15,27 @@ log = utils.get_logger(__name__)
 
 
 class SimpleReIdLitModule(LightningModule):
-    def __init__(self, optimizer_options, backbone: str = 'resnet18'):
+    def __init__(self, optimizer_options, backbone: str = 'resnet18', stage=None):
         super().__init__()
         self.learning_rate = optimizer_options['lr']
 
         self.save_hyperparameters(logger=False)
+
         if backbone == 'resnet18':
             self.net = resnet18(weights=ResNet18_Weights.DEFAULT)
         elif backbone == 'resnet34':
             self.net = resnet34(weights=ResNet34_Weights.DEFAULT)
         elif backbone == 'resnet50':
             self.net = resnet50(weights=ResNet50_Weights.DEFAULT)
+
+        # fine tune
+        if stage is not None and stage == 'second':
+            count = 0
+            for layer in self.net.children():
+                if count <= 5:
+                    for param in layer.parameters():
+                        param.requires_grad = False
+                count += 1
 
         self.optimizer_options = optimizer_options
 

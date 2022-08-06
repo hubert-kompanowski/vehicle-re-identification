@@ -1,21 +1,16 @@
 import xml.etree.ElementTree as ET
 from typing import Optional
 
+import albumentations as A
 import cv2
 import numpy as np
 import pandas as pd
-import torch
-import torchvision
 from PIL import Image
 from hydra.utils import to_absolute_path
-from matplotlib import pyplot as plt
 from pytorch_lightning import LightningDataModule
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
-from torchvision.io import read_image
 from torchvision.transforms import transforms
-import torchvision.transforms as T
-import albumentations as A
 
 
 class CityFlowDataset(Dataset):
@@ -122,7 +117,8 @@ class CityFlowDataModule(LightningDataModule):
             num_workers: int = 0,
             pin_memory: bool = False,
             val_fold=None,
-            aug: dict = None
+            aug: dict = None,
+            stage=None
     ):
         super().__init__()
 
@@ -135,9 +131,16 @@ class CityFlowDataModule(LightningDataModule):
         )
         self.val_fold = val_fold
         self.aug = aug
+        self.stage = stage
 
         if self.val_fold is not None:
             self.val_fold = self.val_fold[0]
+
+        if self.stage is not None and self.stage == 'first':
+            image_dir_name = 'sys_image_train'
+            data_dir = data_dir + '_Simulation'
+        else:
+            image_dir_name = 'image_train'
 
         self.data_train: Optional[Dataset] = None
         self.data_val: Optional[Dataset] = None
@@ -150,12 +153,16 @@ class CityFlowDataModule(LightningDataModule):
         for label in tree.find("Items"):
             data.append(
                 (
-                    f"{to_absolute_path(data_dir)}/image_train/{label.attrib['imageName']}",
+                    f"{to_absolute_path(data_dir)}/{image_dir_name}/{label.attrib['imageName']}",
                     label.attrib["vehicleID"],
                 )
             )
         self.df = pd.DataFrame(data, columns=["image_path", "vehicle_id"])
-        self.all_ids = self.df["vehicle_id"].unique()
+
+        if self.stage is not None and self.stage == 'first':
+            self.all_ids = self.df["vehicle_id"].unique()[:200]
+        else:
+            self.all_ids = self.df["vehicle_id"].unique()
 
     def setup(self, stage: Optional[str] = None):
         if not self.data_train and not self.data_val and not self.data_test:
