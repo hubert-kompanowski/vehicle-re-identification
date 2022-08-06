@@ -5,8 +5,8 @@ import albumentations as A
 import cv2
 import numpy as np
 import pandas as pd
-from PIL import Image
 from hydra.utils import to_absolute_path
+from PIL import Image
 from pytorch_lightning import LightningDataModule
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
@@ -54,7 +54,9 @@ class CityFlowDataset(Dataset):
             self.df[self.df["vehicle_id"] != anchor_vehicle_id].sample(n=1).iloc[0]
         )
 
-        images_list = self.load_images([anchor_image_path, positive_image_path, negative_image_path])
+        images_list = self.load_images(
+            [anchor_image_path, positive_image_path, negative_image_path]
+        )
 
         if self.aug is not None and self.aug.apply:
             images_list = [self.augment(image) for image in images_list]
@@ -83,42 +85,32 @@ class CityFlowDataset(Dataset):
     def augment(self, images):
         transform = []
 
-        if 'horizontal_flip' in self.aug and self.aug.horizontal_flip:
-            transform.append(
-                A.HorizontalFlip(p=0.5)
-            )
-        if 'random_brightness_contrast' in self.aug and self.aug.random_brightness_contrast:
-            transform.append(
-                A.RandomBrightnessContrast(p=0.3)
-            )
-        if 'shift_scale_rotate' in self.aug and self.aug.shift_scale_rotate:
-            transform.append(
-                A.ShiftScaleRotate(p=0.5)
-            )
-        if 'blur' in self.aug and self.aug.blur:
-            transform.append(
-                A.GaussianBlur(p=0.5)
-            )
-        if 'cutout' in self.aug and self.aug.cutout:
-            transform.append(
-                A.Cutout(p=0.4, max_h_size=25, max_w_size=25)
-            )
+        if "horizontal_flip" in self.aug and self.aug.horizontal_flip:
+            transform.append(A.HorizontalFlip(p=0.5))
+        if "random_brightness_contrast" in self.aug and self.aug.random_brightness_contrast:
+            transform.append(A.RandomBrightnessContrast(p=0.3))
+        if "shift_scale_rotate" in self.aug and self.aug.shift_scale_rotate:
+            transform.append(A.ShiftScaleRotate(p=0.5))
+        if "blur" in self.aug and self.aug.blur:
+            transform.append(A.GaussianBlur(p=0.5))
+        if "cutout" in self.aug and self.aug.cutout:
+            transform.append(A.Cutout(p=0.4, max_h_size=25, max_w_size=25))
 
         transform = A.Compose(transform)
-        results = transform(image=images)['image']
+        results = transform(image=images)["image"]
         return results
 
 
 class CityFlowDataModule(LightningDataModule):
     def __init__(
-            self,
-            data_dir: str = "data/",
-            batch_size: int = 1,
-            num_workers: int = 0,
-            pin_memory: bool = False,
-            val_fold=None,
-            aug: dict = None,
-            stage=None
+        self,
+        data_dir: str = "data/",
+        batch_size: int = 1,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        val_fold=None,
+        aug: dict = None,
+        stage=None,
     ):
         super().__init__()
 
@@ -136,11 +128,11 @@ class CityFlowDataModule(LightningDataModule):
         if self.val_fold is not None:
             self.val_fold = self.val_fold[0]
 
-        if self.stage is not None and self.stage == 'first':
-            image_dir_name = 'sys_image_train'
-            data_dir = data_dir + '_Simulation'
+        if self.stage is not None and self.stage == "first":
+            image_dir_name = "sys_image_train"
+            data_dir = data_dir + "_Simulation"
         else:
-            image_dir_name = 'image_train'
+            image_dir_name = "image_train"
 
         self.data_train: Optional[Dataset] = None
         self.data_val: Optional[Dataset] = None
@@ -159,7 +151,7 @@ class CityFlowDataModule(LightningDataModule):
             )
         self.df = pd.DataFrame(data, columns=["image_path", "vehicle_id"])
 
-        if self.stage is not None and self.stage == 'first':
+        if self.stage is not None and self.stage == "first":
             self.all_ids = self.df["vehicle_id"].unique()[:200]
         else:
             self.all_ids = self.df["vehicle_id"].unique()
@@ -171,12 +163,16 @@ class CityFlowDataModule(LightningDataModule):
                 fold1, fold2 = train_test_split(fold1, test_size=0.5, random_state=123)
                 fold3, fold4 = train_test_split(fold3, test_size=0.5, random_state=123)
                 folds = [fold1, fold2, fold3, fold4]
-                train_ids = np.array(folds[0:self.val_fold] + folds[self.val_fold + 1:]).flatten()
+                train_ids = np.array(
+                    folds[0 : self.val_fold] + folds[self.val_fold + 1 :]
+                ).flatten()
                 val_ids = np.array(folds[self.val_fold]).flatten()
                 test_ids = val_ids
             else:
 
-                train_ids, test_ids = train_test_split(self.all_ids, test_size=0.3, random_state=42)
+                train_ids, test_ids = train_test_split(
+                    self.all_ids, test_size=0.3, random_state=42
+                )
                 val_ids, test_ids = train_test_split(test_ids, test_size=0.5, random_state=42)
 
             self.data_train = CityFlowDataset(
@@ -184,7 +180,7 @@ class CityFlowDataModule(LightningDataModule):
                 train_ids,
                 test=False,
                 transform=self.transforms,
-                aug=self.aug
+                aug=self.aug,
             )
             self.data_val = CityFlowDataset(
                 self.df[self.df["vehicle_id"].isin(val_ids)],
@@ -196,7 +192,7 @@ class CityFlowDataModule(LightningDataModule):
                 self.df[self.df["vehicle_id"].isin(test_ids)],
                 test_ids,
                 test=True,
-                transform=self.transforms
+                transform=self.transforms,
             )
 
     def train_dataloader(self):
@@ -226,28 +222,30 @@ class CityFlowDataModule(LightningDataModule):
             shuffle=False,
         )
 
-    def display(self, subset='val'):
+    def display(self, subset="val"):
         self.setup()
         datasets = {
-            'train': self.data_train,
-            'val': self.data_val,
+            "train": self.data_train,
+            "val": self.data_val,
         }
         for images, _ in datasets[subset]:
 
             anchor_img, positive_img, negative_img = datasets[subset].undo_preprocessing(images)
-            vis = np.concatenate((
-                cv2.cvtColor(anchor_img, cv2.COLOR_RGB2BGR),
-                cv2.cvtColor(positive_img, cv2.COLOR_RGB2BGR),
-                cv2.cvtColor(negative_img, cv2.COLOR_RGB2BGR),
+            vis = np.concatenate(
+                (
+                    cv2.cvtColor(anchor_img, cv2.COLOR_RGB2BGR),
+                    cv2.cvtColor(positive_img, cv2.COLOR_RGB2BGR),
+                    cv2.cvtColor(negative_img, cv2.COLOR_RGB2BGR),
+                ),
+                axis=1,
+            )
+            cv2.imshow("win", vis)
 
-            ), axis=1)
-            cv2.imshow('win', vis)
-
-            if cv2.waitKey(1500) == ord('q'):
+            if cv2.waitKey(1500) == ord("q"):
                 break
 
     def show_ids(self):
         self.setup()
-        print('train', sorted(self.data_train.all_ids))
-        print('val', sorted(self.data_val.all_ids))
-        print('test', sorted(self.data_test.all_ids))
+        print("train", sorted(self.data_train.all_ids))
+        print("val", sorted(self.data_val.all_ids))
+        print("test", sorted(self.data_test.all_ids))

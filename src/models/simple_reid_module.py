@@ -2,34 +2,41 @@ import random
 from typing import Any, List
 
 import torch
-import wandb
 from pytorch_lightning import LightningModule
-from torch.optim.lr_scheduler import OneCycleLR, CyclicLR
-from torchvision.models import resnet18, ResNet18_Weights, resnet34, ResNet34_Weights, resnet50, ResNet50_Weights
+from torch.optim.lr_scheduler import CyclicLR, OneCycleLR
+from torchvision.models import (
+    ResNet18_Weights,
+    ResNet34_Weights,
+    ResNet50_Weights,
+    resnet18,
+    resnet34,
+    resnet50,
+)
 
+import wandb
+from src import utils
 from src.schedulers.warmup import WarmupLR
 from src.utils.metrics import MeanAveragePrecision, RankOne, Visualizator
-from src import utils
 
 log = utils.get_logger(__name__)
 
 
 class SimpleReIdLitModule(LightningModule):
-    def __init__(self, optimizer_options, backbone: str = 'resnet18', stage=None):
+    def __init__(self, optimizer_options, backbone: str = "resnet18", stage=None):
         super().__init__()
-        self.learning_rate = optimizer_options['lr']
+        self.learning_rate = optimizer_options["lr"]
 
         self.save_hyperparameters(logger=False)
 
-        if backbone == 'resnet18':
+        if backbone == "resnet18":
             self.net = resnet18(weights=ResNet18_Weights.DEFAULT)
-        elif backbone == 'resnet34':
+        elif backbone == "resnet34":
             self.net = resnet34(weights=ResNet34_Weights.DEFAULT)
-        elif backbone == 'resnet50':
+        elif backbone == "resnet50":
             self.net = resnet50(weights=ResNet50_Weights.DEFAULT)
 
         # fine tune
-        if stage is not None and stage == 'second':
+        if stage is not None and stage == "second":
             count = 0
             for layer in self.net.children():
                 if count <= 5:
@@ -76,8 +83,8 @@ class SimpleReIdLitModule(LightningModule):
         return {"loss": loss}
 
     def validation_epoch_end(self, outputs: List[Any]):
-        loss = sum(output['loss'] for output in outputs) / len(outputs)
-        wandb.log({'val_loss_accumulated': loss})
+        loss = sum(output["loss"] for output in outputs) / len(outputs)
+        wandb.log({"val_loss_accumulated": loss})
 
     def test_step(self, batch: Any, batch_idx: int):
         images, embedding, vehicle_id = self.embed(batch)
@@ -99,7 +106,7 @@ class SimpleReIdLitModule(LightningModule):
 
     def on_epoch_start(self):
         self.log("epoch", self.current_epoch)
-        self.log("learning_rate", self.trainer.optimizers[0].param_groups[0]['lr'])
+        self.log("learning_rate", self.trainer.optimizers[0].param_groups[0]["lr"])
 
     def on_epoch_end(self):
         self.test_mAP.reset()
@@ -112,46 +119,50 @@ class SimpleReIdLitModule(LightningModule):
             f"lr: {self.learning_rate}, scheduler: {self.optimizer_options['scheduler']}"
         )
 
-        if self.optimizer_options['optimizer'] == 'adam':
+        if self.optimizer_options["optimizer"] == "adam":
             optimizer = torch.optim.Adam(params=self.parameters(), lr=self.learning_rate)
-        elif self.optimizer_options['optimizer'] == 'sgd':
+        elif self.optimizer_options["optimizer"] == "sgd":
             optimizer = torch.optim.SGD(params=self.parameters(), lr=self.learning_rate)
         else:
             raise Exception("Bad optimizer chosen")
 
         if self.optimizer_options.scheduler is not None and self.optimizer_options.scheduler.apply:
-            if self.optimizer_options.scheduler.type == 'WarmupLR':
+            if self.optimizer_options.scheduler.type == "WarmupLR":
                 scheduler = WarmupLR(
                     optimizer,
                     max_lr=self.optimizer_options.scheduler.max_lr,
-                    num_epochs=self.optimizer_options.scheduler.num_epochs
+                    num_epochs=self.optimizer_options.scheduler.num_epochs,
                 )
-            elif self.optimizer_options.scheduler.type == 'OneCycleLR':
+            elif self.optimizer_options.scheduler.type == "OneCycleLR":
                 scheduler = OneCycleLR(
                     optimizer,
                     max_lr=self.optimizer_options.scheduler.max_lr,
                     epochs=self.optimizer_options.scheduler.num_epochs,
-                    steps_per_epoch=1
+                    steps_per_epoch=1,
                 )
-            elif self.optimizer_options.scheduler.type == 'CyclicLR':
+            elif self.optimizer_options.scheduler.type == "CyclicLR":
                 scheduler = CyclicLR(
                     optimizer,
                     base_lr=self.learning_rate,
                     max_lr=self.optimizer_options.scheduler.max_lr,
                     step_size_up=5,
                     mode="exp_range",
-                    gamma=0.92
+                    gamma=0.92,
                 )
             else:
                 raise Exception("Bad scheduler chosen")
 
             return {
                 "optimizer": optimizer,
-                "lr_scheduler": {"scheduler": scheduler, "monitor": "train_loss", "interval": "epoch"}
+                "lr_scheduler": {
+                    "scheduler": scheduler,
+                    "monitor": "train_loss",
+                    "interval": "epoch",
+                },
             }
 
         return torch.optim.Adam(
             params=self.parameters(),
             lr=self.learning_rate,
-            weight_decay=self.optimizer_options['weight_decay']
+            weight_decay=self.optimizer_options["weight_decay"],
         )

@@ -39,10 +39,10 @@ repos:
         types: [yaml]
 
   # python code analysis
-  - repo: https://github.com/PyCQA/flake8
-    rev: 4.0.1
-    hooks:
-      - id: flake8
+  #  - repo: https://github.com/PyCQA/flake8
+  #    rev: 4.0.1
+  #    hooks:
+  #      - id: flake8
 
   # jupyter notebook cell output clearing
   - repo: https://github.com/kynan/nbstripout
