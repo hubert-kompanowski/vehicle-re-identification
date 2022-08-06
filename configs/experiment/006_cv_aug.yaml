@@ -14,7 +14,6 @@ defaults:
 # this allows you to overwrite only specified parameters
 
 # name of the run determines folder name in logs
-name: "cv_res34_no_decay"
 
 seed: 12345
 

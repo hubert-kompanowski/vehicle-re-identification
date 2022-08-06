@@ -1,0 +1,16 @@
+# @package _global_
+
+datamodule:
+  batch_size: 16
+
+trainer:
+  min_epochs: 80
+  max_epochs: 80
+
+
+model:
+  optimizer_options:
+    scheduler:
+      num_epochs: 80
+      max_lr: 0.004
+  backbone: resnet50

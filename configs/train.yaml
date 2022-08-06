@@ -3,10 +3,10 @@
 # specify here default training configuration
 defaults:
   - _self_
-  - datamodule: mnist.yaml
-  - model: mnist.yaml
-  - callbacks: default.yaml
-  - logger: null # set logger here or use command line (e.g. `python train.py logger=tensorboard`)
+  - datamodule: city_flow.yaml
+  - model: simple_reid.yaml
+  - callbacks: saver.yaml
+  - logger: wandb.yaml
   - trainer: default.yaml
   - log_dir: default.yaml
 
@@ -50,12 +50,12 @@ train: True
 test: True
 
 # seed for random number generators in pytorch, numpy and python.random
-seed: null
+seed: 12345
 
 # default name for the experiment, determines logging folder path
 # (you can overwrite this name in experiment configs)
 name: "default"
 
-run_cv: False
+run_cv: True
 hash_cv: null
 

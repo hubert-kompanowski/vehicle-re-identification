@@ -1,12 +1,13 @@
 _target_: src.models.simple_reid_module.SimpleReIdLitModule
-backbone: resnet18
 
 optimizer_options:
-  optimizer: adam
+  optimizer: sgd
   lr: 0.001
   weight_decay: 0.0005
+
   scheduler:
-    apply: False
-    type: WarmupLR
-    max_lr: 0.00035
-    num_epochs: 70
+    apply: True
+    type: OneCycleLR
+    max_lr: 0.0008
+    num_epochs: 40
+backbone: resnet34

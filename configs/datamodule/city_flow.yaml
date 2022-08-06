@@ -1,12 +1,14 @@
 _target_: src.datamodules.city_flow_datamodule.CityFlowDataModule
 
 data_dir: "data/AIC21_Track2_ReID"
-batch_size: 1
-num_workers: 0
+batch_size: 64
+num_workers: 12
 pin_memory: False
 val_fold: null
+
 aug:
-  apply: False
-  horizontal_flip: False
-  random_brightness_contrast: False
-  shift_scale_rotate: False
+  apply: True
+  horizontal_flip: True
+  random_brightness_contrast: True
+  shift_scale_rotate: True
+  cutout: True

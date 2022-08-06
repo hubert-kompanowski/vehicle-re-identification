@@ -54,7 +54,7 @@ class SimpleReIdLitModule(LightningModule):
 
     def training_step(self, batch: Any, batch_idx: int):
         loss = self.step(batch)
-        self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=False)
+        self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=False)
         return {"loss": loss}
 
     def training_epoch_end(self, outputs: List[Any]):
@@ -62,7 +62,7 @@ class SimpleReIdLitModule(LightningModule):
 
     def validation_step(self, batch: Any, batch_idx: int):
         loss = self.step(batch)
-        self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=False)
+        self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=False)
         return {"loss": loss}
 
     def validation_epoch_end(self, outputs: List[Any]):
@@ -80,8 +80,8 @@ class SimpleReIdLitModule(LightningModule):
     def test_epoch_end(self, outputs: List[Any]):
         mAP = self.test_mAP.compute_final()
         rank_one = self.test_rank_one.compute_final()
-        self.log("test/mAP", mAP, on_step=False, on_epoch=True)
-        self.log("test/rank-1", rank_one, on_step=False, on_epoch=True)
+        self.log("test_mAP", mAP, on_step=False, on_epoch=True)
+        self.log("test_rank-1", rank_one, on_step=False, on_epoch=True)
 
         # for i in random.sample(range(1, 200), 2):
         #     images, vids = self.test_visualize.get_images(i, n=5)

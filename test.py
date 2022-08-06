@@ -1,3 +1,5 @@
+import sys
+
 import dotenv
 import hydra
 from omegaconf import DictConfig
@@ -9,6 +11,7 @@ dotenv.load_dotenv(override=True)
 
 @hydra.main(config_path="configs/", config_name="test.yaml")
 def main(config: DictConfig):
+    config.name = [x for x in sys.argv if 'experiment' in x][0].split('=')[-1]
 
     # Imports can be nested inside @hydra.main to optimize tab completion
     # https://github.com/facebookresearch/hydra/issues/934

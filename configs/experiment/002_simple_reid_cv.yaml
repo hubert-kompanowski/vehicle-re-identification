@@ -14,7 +14,6 @@ defaults:
 # this allows you to overwrite only specified parameters
 
 # name of the run determines folder name in logs
-name: "simple_reid_cv_resnet34"
 
 seed: 12345
 

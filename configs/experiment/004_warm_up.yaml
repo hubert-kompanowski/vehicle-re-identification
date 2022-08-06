@@ -14,7 +14,6 @@ defaults:
 # this allows you to overwrite only specified parameters
 
 # name of the run determines folder name in logs
-name: "warm_up_max_lr"
 
 seed: 12345
 

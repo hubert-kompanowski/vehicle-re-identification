@@ -1,8 +1,5 @@
 # @package _global_
 
-# to execute this experiment run:
-# python train.py experiment=example
-
 defaults:
   - override /datamodule: city_flow.yaml
   - override /model: simple_reid.yaml
@@ -10,16 +7,11 @@ defaults:
   - override /logger: wandb.yaml
   - override /trainer: default.yaml
 
-# all parameters below will be merged with parameters from default configurations set above
-# this allows you to overwrite only specified parameters
-
-# name of the run determines folder name in logs
-
 seed: 12345
 
 trainer:
-  min_epochs: 70
-  max_epochs: 70
+  min_epochs: 60
+  max_epochs: 80
   gpus: 1
 
 model:
@@ -29,11 +21,12 @@ model:
       apply: True
       type: OneCycleLR
       max_lr: 0.0008
-      num_epochs: 70
+      num_epochs: 80
   backbone: resnet34
 
 datamodule:
   batch_size: 64
+  num_workers: 12
   aug:
     apply: True
     horizontal_flip: True
