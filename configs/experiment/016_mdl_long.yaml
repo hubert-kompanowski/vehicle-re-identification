@@ -1,0 +1,12 @@
+# @package _global_
+
+run_mdl: True
+
+trainer:
+  min_epochs: 80
+  max_epochs: 120
+
+model:
+  optimizer_options:
+    scheduler:
+      num_epochs: 120

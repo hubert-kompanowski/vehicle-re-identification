@@ -27,7 +27,7 @@ def run_stage(config, stage, hash_cv):
     for fold in range(4):
         if stage == "second":
             saved_checkpoints = glob.glob(f"{config.output_dir}/checkpoints/epoch_*_fold*")
-            config.trainer.resume_from_checkpoint = get_ckpt_by_fold(saved_checkpoints, fold)
+            config.model.checkpoint_path = get_ckpt_by_fold(saved_checkpoints, fold)
         config.datamodule.val_fold = [fold]
         config.callbacks.model_checkpoint.filename = (
             "epoch_{epoch:03d}_fold" + f"{fold}_stage_{stage}"

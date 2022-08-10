@@ -59,6 +59,6 @@ name: "default"
 run_cv: True
 run_mdl: False
 hash_cv: null
-last_stride: False
+last_stride: True
 
 output_dir: ${hydra:runtime.output_dir}

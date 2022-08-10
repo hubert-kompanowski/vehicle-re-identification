@@ -22,7 +22,9 @@ log = utils.get_logger(__name__)
 
 
 class SimpleReIdLitModule(LightningModule):
-    def __init__(self, optimizer_options, backbone: str = "resnet18", stage=None):
+    def __init__(
+        self, optimizer_options, backbone: str = "resnet18", stage=None, checkpoint_path=None
+    ):
         super().__init__()
         self.learning_rate = optimizer_options["lr"]
 
@@ -37,6 +39,12 @@ class SimpleReIdLitModule(LightningModule):
 
         # fine tune
         if stage is not None and stage == "second":
+
+            checkpoint = torch.load(checkpoint_path)
+
+            print(f"Loading model state dict from {checkpoint_path}")
+            self.load_state_dict(checkpoint["state_dict"])
+
             count = 0
             for layer in self.net.children():
                 if count <= 5:

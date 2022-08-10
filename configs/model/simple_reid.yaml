@@ -8,6 +8,7 @@ optimizer_options:
     apply: True
     type: OneCycleLR
     max_lr: 0.0008
-    num_epochs: 40
+    num_epochs: 80
 backbone: resnet34
 stage: null
+checkpoint_path: null
