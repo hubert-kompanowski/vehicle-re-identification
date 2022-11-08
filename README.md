@@ -28,8 +28,8 @@ Install dependencies
 
 ```bash
 # clone project
-git clone https://github.com/YourGithubName/your-repo-name
-cd your-repo-name
+git clone https://github.com/hubert-kompanowski/vehicle-re-identification
+cd vehicle-re-identification
 
 # [OPTIONAL] create conda environment
 conda create -n myenv python=3.10
