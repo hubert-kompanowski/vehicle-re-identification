@@ -12,3 +12,4 @@ optimizer_options:
 backbone: resnet34
 stage: null
 checkpoint_path: null
+map_at_k: 100

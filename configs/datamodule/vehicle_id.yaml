@@ -1,0 +1,15 @@
+_target_: src.datamodules.vehicle_id_datamodule.VehicleIdDataModule
+
+data_dir: "data/VehicleID_V1.0"
+test_file: test_list_2400.txt
+batch_size: 64
+num_workers: 12
+pin_memory: False
+val_fold: null
+
+aug:
+  apply: True
+  horizontal_flip: True
+  random_brightness_contrast: True
+  shift_scale_rotate: True
+  cutout: True

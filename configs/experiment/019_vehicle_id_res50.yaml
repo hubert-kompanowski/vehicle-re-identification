@@ -1,0 +1,14 @@
+# @package _global_
+
+defaults:
+  - override /datamodule: vehicle_id.yaml
+
+datamodule:
+  batch_size: 16
+
+model:
+  optimizer_options:
+    scheduler:
+      num_epochs: 80
+      max_lr: 0.004
+  backbone: resnet50

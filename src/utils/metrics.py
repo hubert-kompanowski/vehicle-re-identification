@@ -3,7 +3,8 @@ from torchmetrics import Metric
 
 
 class MeanAveragePrecision(Metric):
-    full_state_update=True
+    full_state_update = True
+
     def __init__(self, k=100):
         super(MeanAveragePrecision, self).__init__()
         self.add_state("embeddings", default=torch.Tensor([]))
@@ -13,7 +14,9 @@ class MeanAveragePrecision(Metric):
     def _average_precision(self, ranked_list: torch.Tensor):
         precisions_of_relevant_elements = []
         relevant_count = 0
-        for all_count, el in enumerate(ranked_list[:self.k], start=1):
+        if self.k is not None:
+            ranked_list = ranked_list[: self.k]
+        for all_count, el in enumerate(ranked_list, start=1):
             if el == 1:
                 relevant_count += 1
                 precisions_of_relevant_elements.append(relevant_count / all_count)
@@ -110,6 +113,7 @@ class Visualizator(Metric):
         values, indices = dists.sort(descending=False)
         return self.images[indices][:n], self.vehicle_ids[indices][:n]
 
+
 def average_precision_at_k(ranked_list, k):
     precisions_of_relevant_elements = []
     relevant_count = 0
@@ -133,25 +137,26 @@ def mean_average_precision_at_k(ranked_lists, k):
 
 def main():
     ranked_list = [
-        [0, 1, 0, 1, 1],
+        [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     ]
+    print(average_precision_at_k(ranked_list[0], k=5))
 
-    embeddings = torch.tensor([
-        [[10],[10]], [[55],[55]], [[15],[15]], [[50],[50]], [[45],[45]]
-    ])
-
-    vids = torch.tensor([
-        [15], [69], [14], [69], [69]
-    ])
-
-    metric = MeanAveragePrecision()
-
-    for e, v in zip(embeddings, vids):
-        print(e,v)
-        metric(e,v)
-
-
-    print(metric.compute_final())
+    # embeddings = torch.tensor([
+    #     [[10],[10]], [[55],[55]], [[15],[15]], [[50],[50]], [[45],[45]]
+    # ])
+    #
+    # vids = torch.tensor([
+    #     [15], [69], [14], [69], [69]
+    # ])
+    #
+    # metric = MeanAveragePrecision()
+    #
+    # for e, v in zip(embeddings, vids):
+    #     print(e,v)
+    #     metric(e,v)
+    #
+    #
+    # print(metric.compute_final())
 
     # print(mean_average_precision_at_k(ranked_list, 5))
 

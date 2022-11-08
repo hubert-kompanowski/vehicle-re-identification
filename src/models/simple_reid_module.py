@@ -23,7 +23,12 @@ log = utils.get_logger(__name__)
 
 class SimpleReIdLitModule(LightningModule):
     def __init__(
-        self, optimizer_options, backbone: str = "resnet18", stage=None, checkpoint_path=None
+        self,
+        optimizer_options,
+        backbone: str = "resnet18",
+        stage=None,
+        checkpoint_path=None,
+        map_at_k=100,
     ):
         super().__init__()
         self.learning_rate = optimizer_options["lr"]
@@ -56,7 +61,7 @@ class SimpleReIdLitModule(LightningModule):
 
         self.criterion = torch.nn.TripletMarginLoss()
 
-        self.test_mAP = MeanAveragePrecision()
+        self.test_mAP = MeanAveragePrecision(k=map_at_k)
         self.test_rank_one = RankOne()
         # self.test_visualize = Visualizator()
 
